@@ -31,6 +31,14 @@ else
 fi
 echo Type: ${record_type}
 
+if [ -z "`which curl`" ] || [ ! -s "`which curl`" ]
+then
+  web_driver='wget'
+else
+  web_driver='curl'
+fi
+echo Request Driver: ${web_driver}
+
 # OS Detection
 case $(uname) in
   'Linux')
@@ -40,8 +48,7 @@ case $(uname) in
 	case $IPtype in
 		'1')
 
-		curltest=`which curl`
-		if [ -z "$curltest" ] || [ ! -s "`which curl`" ]
+		if [ $web_driver = 'wget' ]
 		then
 			#根据实际情况选择使用合适的网址
 			#wget --no-check-certificate --quiet --output-document=- "https://www.ipip.net" | grep "IP地址" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
@@ -205,7 +212,12 @@ arApiPost() {
     else
         local param="login_token=${arToken}&format=json&${2}"
     fi
-    wget --quiet --no-check-certificate --secure-protocol=TLSv1_2 --output-document=- --user-agent=$agent --post-data $param $inter
+    if [ $web_driver = 'wget' ]
+    then
+      wget --quiet --no-check-certificate --secure-protocol=TLSv1_2 --output-document=- --user-agent=$agent --post-data $param $inter
+    else
+      curl -s -k -X POST -A $agent -d $param $inter
+    fi
 }
 
 # Update
