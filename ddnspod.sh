@@ -24,7 +24,7 @@
 #Please select IP type
 IPtype=1  #1.WAN 2.LAN 3.IPv6
 #---------------------
-if [ $IPtype = '1' ]; then
+if [ $IPtype = '3' ]; then
     record_type='AAAA'
 else
     record_type='A'
