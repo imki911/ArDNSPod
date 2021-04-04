@@ -4,7 +4,7 @@
 
 # Usage
 
-[详细介绍使用方法的博文](https://blog.csdn.net/Imkiimki/article/details/83794355)（老鸟请略过）
+[详细介绍使用方法的博文](https://sword.studio/232.html)（老鸟请略过）
 
 首先要在dnspod网页上新建解析记录，然后获得api token。  
 复制`dns.conf.example`到同一目录下的`dns.conf`并根据你的配置修。  
@@ -28,7 +28,7 @@ arToken="12345,7676f344eaeaea9074c123451234512d"
 arDdnsCheck "test.org" "subdomain"
 ```
 
-# 最近更新
+# 更新历史
 
 2015/2/24
 
@@ -65,6 +65,19 @@ arDdnsCheck "test.org" "subdomain"
 
 2020-01-09
 - API返回格式又变了，更改正则表达匹配。
+
+------forked from https://github.com/imki911/ArDNSPod -----
+
+2020-09-21
+- 修改wget和curl选择，因为群晖wget版本1.15，不支持TLS v1.2，改为使用curl
+
+2020-09-22
+- 修复路径获取为空问题
+
+2020-11-22
+- 获取IPV6地址时排除内网IPV6地址
+
+
 
 # Credit
 

@@ -66,7 +66,7 @@ case $(uname) in
 		
 		# 因为一般ipv6没有nat ipv6的获得可以本机获得
 		#ifconfig $(nvram get wan0_ifname_t) | awk '/Global/{print $3}' | awk -F/ '{print $1}' 
-		ip addr show dev eth0 | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | awk 'NR==1' #如果没有nvram，使用这条，注意将eth0改为本机上的网口设备 （通过 ifconfig 查看网络接口）
+		ip addr show dev eth0 | sed '/fe80/d' | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | awk 'NR==1' #如果没有nvram，使用这条，注意将eth0改为本机上的网口设备 （通过 ifconfig 查看网络接口）
 		;;
  	esac
  
@@ -147,7 +147,7 @@ rreadlink() ( # Execute the function in a *subshell* to localize variables and t
   fi
 )
 
-DIR=$(dirname -- "$(readlink "$0")")
+DIR=$(dirname -- "$(readlink -f "$0")")
 
 # Global Variables:
 
@@ -205,7 +205,17 @@ arApiPost() {
     else
         local param="login_token=${arToken}&format=json&${2}"
     fi
-    wget --quiet --no-check-certificate --secure-protocol=TLSv1_2 --output-document=- --user-agent=$agent --post-data $param $inter
+    
+    curltest=`which curl`
+    if [ -z "$curltest" ] || [ ! -s "`which curl`" ] 
+    then
+	#使用wget
+	wget --quiet --no-check-certificate --secure-protocol=TLSv1_2 --output-document=- --user-agent=$agent --post-data $param $inter
+    else
+        curl -k -s --tlsv1.2 --output - --user-agent $agent --data $param $inter
+    fi    
+    
+    
 }
 
 # Update
