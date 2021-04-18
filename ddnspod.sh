@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #################################################
 # AnripDdns v5.08
@@ -8,7 +8,7 @@
 #################################################
 
 #################################################
-# 2018-11-06 
+# 2018-11-06
 # support  LAN / WAN / IPV6 resolution
 
 # 2019-05-24
@@ -31,45 +31,46 @@ else
 fi
 echo Type: ${record_type}
 
+if [ -z "`which curl`" ] || [ ! -s "`which curl`" ]
+then
+  web_driver='wget'
+else
+  web_driver='curl'
+fi
+echo Request Driver: ${web_driver}
+
 # OS Detection
 case $(uname) in
   'Linux')
     echo "OS: Linux"
     arIpAddress() {
+      case $IPtype in
+        '1')
+          if [ $web_driver = 'wget' ]
+          then
+            #根据实际情况选择使用合适的网址
+            #wget --no-check-certificate --quiet --output-document=- "https://www.ipip.net" | grep "IP地址" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+            wget --no-check-certificate --secure-protocol=TLSv1_2 --quiet --output-document=- "http://members.3322.org/dyndns/getip" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+            #wget --no-check-certificate --secure-protocol=TLSv1_2 --quiet --output-document=- "ip.6655.com/ip.aspx" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+            #wget --no-check-certificate --secure-protocol=TLSv1_2 --quiet --output-document=- "ip.3322.net" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+          else
+            curl -k -s "http://members.3322.org/dyndns/getip" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+            #curl -L -k -s "https://www.ipip.net" | grep "IP地址" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+            #curl -k -s ip.6655.com/ip.aspx | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+            #curl -k -s ip.3322.net | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+          fi
+        ;;
 
-	case $IPtype in
-		'1')
-				
-		curltest=`which curl`
-		if [ -z "$curltest" ] || [ ! -s "`which curl`" ] 
-		then
-			#根据实际情况选择使用合适的网址
-			#wget --no-check-certificate --quiet --output-document=- "https://www.ipip.net" | grep "IP地址" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
-			wget --no-check-certificate --secure-protocol=TLSv1_2 --quiet --output-document=- "http://members.3322.org/dyndns/getip" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
-			#wget --no-check-certificate --secure-protocol=TLSv1_2 --quiet --output-document=- "ip.6655.com/ip.aspx" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
-			#wget --no-check-certificate --secure-protocol=TLSv1_2 --quiet --output-document=- "ip.3322.net" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
-		else
-		curl -k -s "http://members.3322.org/dyndns/getip" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
-		#curl -L -k -s "https://www.ipip.net" | grep "IP地址" | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
+        '2')
+          ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{print $4}' | cut -d/ -f1
+          ;;
 
-		#curl -k -s ip.6655.com/ip.aspx | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1
-		#curl -k -s ip.3322.net | grep -E -o '([0-9]+\.){3}[0-9]+' | head -n1 | cut -d' ' -f1		
-		fi
-		;;
- 
-		'2')
-		
-		ip -o -4 addr list | grep -Ev '\s(docker|lo)' | awk '{print $4}' | cut -d/ -f1 
-		;;
- 
-		'3')
-		
-		# 因为一般ipv6没有nat ipv6的获得可以本机获得
-		#ifconfig $(nvram get wan0_ifname_t) | awk '/Global/{print $3}' | awk -F/ '{print $1}' 
-		ip addr show dev eth0 | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | awk 'NR==1' #如果没有nvram，使用这条，注意将eth0改为本机上的网口设备 （通过 ifconfig 查看网络接口）
-		;;
- 	esac
- 
+        '3')
+          # 因为一般ipv6没有nat ipv6的获得可以本机获得
+          #ifconfig $(nvram get wan0_ifname_t) | awk '/Global/{print $3}' | awk -F/ '{print $1}'
+          ip addr show dev eth0 | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | awk 'NR==1' #如果没有nvram，使用这条，注意将eth0改为本机上的网口设备 （通过 ifconfig 查看网络接口）
+          ;;
+      esac
     }
     ;;
   'FreeBSD')
@@ -111,7 +112,7 @@ rreadlink() ( # Execute the function in a *subshell* to localize variables and t
   # (Note that command is too inconsistent across shells, so we don't use it.)
   # `command` is a *builtin* in bash, dash, ksh, zsh, and some platforms do not even have
   # an external utility version of it (e.g, Ubuntu).
-  # `command` bypasses aliases and shell functions and also finds builtins 
+  # `command` bypasses aliases and shell functions and also finds builtins
   # in bash, dash, and ksh. In zsh, option POSIX_BUILTINS must be turned on for that
   # to happen.
   { \unalias command; \unset -f command; } >/dev/null 2>&1
@@ -167,21 +168,21 @@ arDdnsInfo() {
     local domainID recordID recordIP
     # Get domain ID
     domainID=$(arApiPost "Domain.Info" "domain=${1}")
-    
+
     domainID=$(echo $domainID | sed 's/.*{"id":"\([0-9]*\)".*/\1/')
-    
+
     # Get Record ID
     recordID=$(arApiPost "Record.List" "domain_id=${domainID}&sub_domain=${2}&record_type=${record_type}")
-    
+
     recordID=$(echo $recordID | sed 's/.*\[{"id":"\([0-9]*\)".*/\1/')
-    
+
     # Last IP
     recordIP=$(arApiPost "Record.Info" "domain_id=${domainID}&record_id=${recordID}&record_type=${record_type}")
-    
+
     recordIP=$(echo $recordIP | sed 's/.*,"value":"\([0-9a-z\.:]*\)".*/\1/')
-    
+
     # Output IP
-    case "$recordIP" in 
+    case "$recordIP" in
       [1-9a-z]*)
         echo $recordIP
         return 0
@@ -205,15 +206,20 @@ arApiPost() {
     else
         local param="login_token=${arToken}&format=json&${2}"
     fi
-    wget --quiet --no-check-certificate --secure-protocol=TLSv1_2 --output-document=- --user-agent=$agent --post-data $param $inter
+    if [ $web_driver = 'wget' ]
+    then
+      wget --quiet --no-check-certificate --secure-protocol=TLSv1_2 --output-document=- --user-agent=$agent --post-data $param $inter
+    else
+      curl -s -k -X POST -A $agent -d $param $inter
+    fi
 }
 
 # Update
 # arg: main domain  sub domain
 arDdnsUpdate() {
     local domainID recordID recordRS recordCD recordIP myIP
-    
-  
+
+
     # Get domain ID
     domainID=$(arApiPost "Domain.Info" "domain=${1}")
     domainID=$(echo $domainID | sed 's/.*{"id":"\([0-9]*\)".*/\1/')
@@ -227,7 +233,7 @@ arDdnsUpdate() {
     recordRS=$(arApiPost "Record.Modify" "domain_id=${domainID}&sub_domain=${2}&record_type=${record_type}&record_id=${recordID}&record_line=默认&value=${myIP}")
     recordCD=$(echo $recordRS | sed 's/.*{"code":"\([0-9]*\)".*/\1/')
     recordIP=$(echo $recordRS | sed 's/.*,"value":"\([0-9a-z\.:]*\)".*/\1/')
-    
+
     # Output IP
     if [ "$recordIP" = "$myIP" ]; then
         if [ "$recordCD" = "1" ]; then
@@ -256,7 +262,7 @@ arDdnsCheck() {
         echo "lastIP: ${lastIP}"
         if [ "$lastIP" != "$hostIP" ]; then
             postRS=$(arDdnsUpdate $1 $2)
-             
+
             if [ $? -eq 0 ]; then
                 echo "update to ${postRS} successed."
                 return 0
