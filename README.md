@@ -70,3 +70,10 @@ arDdnsCheck "test.org" "subdomain"
 
 Original: anrip
 Forked form anrip/ArDNSPod
+
+# Docker Support
+
+* Build Docker Image : `docker build -t ardnspod:1.0 .`
+* Run Docker Image : `docker run -v /tmp/dns.conf:/ArDNSPod/dns.conf --name ardnspod ardnspod:1.0`
+* The follow Task : `docker start ardnspod`
+* Check container logs : `docker logs ardnspod`
